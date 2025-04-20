@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}AI Research Assistant{% endblock %}</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <style>
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 250px;
+        position: fixed;
+        top: 56px;
+        bottom: 0;
+        left: 0;
+        z-index: 100;
+        padding: 20px 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        background-color: #f8f9fa;
+        border-right: 1px solid #dee2e6;
+        transition: all 0.3s;
+      }
+
+      .sidebar .nav-link {
+        color: #333;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem;
+        margin: 0.2rem 0.8rem;
+      }
+
+      .sidebar .nav-link:hover {
+        background-color: #e9ecef;
+      }
+
+      .sidebar .nav-link.active {
+        background-color: #0d6efd;
+        color: white;
+      }
+
+      .sidebar .nav-link i {
+        margin-right: 0.5rem;
+        width: 20px;
+        text-align: center;
+      }
+
+      .main-content {
+        margin-left: 250px;
+        padding: 20px;
+        flex: 1;
+        transition: all 0.3s;
+      }
+
+      .navbar-brand {
+        padding-left: 15px;
+      }
+
+      footer {
+        margin-left: 250px;
+        transition: all 0.3s;
+      }
+
+      @media (max-width: 768px) {
+        .sidebar {
+          margin-left: -250px;
+        }
+
+        .sidebar.active {
+          margin-left: 0;
+        }
+
+        .main-content,
+        footer {
+          margin-left: 0;
+        }
+
+        .main-content.active,
+        footer.active {
+          margin-left: 250px;
+        }
+      }
+
+      .sidebar-toggle {
+        cursor: pointer;
+      }
+
+      .user-info {
+        padding: 15px;
+        border-bottom: 1px solid #dee2e6;
+        margin-bottom: 15px;
+      }
+
+      .user-info .user-name {
+        font-weight: bold;
+        font-size: 1.1rem;
+      }
+
+      .sidebar-heading {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1rem;
+        color: #6c757d;
+        font-weight: bold;
+        padding: 0.5rem 1rem;
+        margin-top: 1rem;
+      }
+    </style>
+    {% block styles %}{% endblock %}
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+      <div class="container-fluid">
+        <button class="btn btn-link text-light sidebar-toggle me-2 d-md-none">
+          <i class="fas fa-bars"></i>
+        </button>
+        <a class="navbar-brand" href="{{ url_for('main.index') }}"
+          >AI Research Assistant</a
+        >
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            {% if current_user %}
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                id="userDropdown"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <i class="fas fa-user-circle me-1"></i>{{ current_user.username
+                }}
+              </a>
+              <ul
+                class="dropdown-menu dropdown-menu-end"
+                aria-labelledby="userDropdown"
+              >
+                <li>
+                  <a class="dropdown-item" href="#"
+                    ><i class="fas fa-user me-2"></i>Profile</a
+                  >
+                </li>
+                <li>
+                  <a class="dropdown-item" href="#"
+                    ><i class="fas fa-cog me-2"></i>Settings</a
+                  >
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                  <a
+                    class="dropdown-item"
+                    href="{{ url_for('auth_views.logout') }}"
+                    ><i class="fas fa-sign-out-alt me-2"></i>Logout</a
+                  >
+                </li>
+              </ul>
+            </li>
+            {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('auth_views.login') }}"
+                ><i class="fas fa-sign-in-alt me-1"></i>Login</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('auth_views.register') }}"
+                ><i class="fas fa-user-plus me-1"></i>Register</a
+              >
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      {% if current_user %}
+      <div class="user-info">
+        <div class="user-name">{{ current_user.username }}</div>
+        <small class="text-muted">{{ current_user.email }}</small>
+      </div>
+      {% endif %}
+
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a
+            class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}"
+            href="{{ url_for('main.index') }}"
+          >
+            <i class="fas fa-home"></i> Home
+          </a>
+        </li>
+
+        {% if current_user %}
+        <li class="nav-item">
+          <a
+            class="nav-link {% if request.endpoint == 'main.dashboard' %}active{% endif %}"
+            href="{{ url_for('main.dashboard') }}"
+          >
+            <i class="fas fa-tachometer-alt"></i> Dashboard
+          </a>
+        </li>
+
+        <div class="sidebar-heading">Research</div>
+        <li class="nav-item">
+          <a
+            class="nav-link {% if request.endpoint == 'research_views.projects' %}active{% endif %}"
+            href="{{ url_for('research_views.projects') }}"
+          >
+            <i class="fas fa-folder"></i> Projects
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('research_views.new_project') }}">
+            <i class="fas fa-plus-circle"></i> New Project
+          </a>
+        </li>
+        
+        {% if current_user.is_admin %}
+        <div class="sidebar-heading">Administration</div>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('admin.manage_users') }}">
+            <i class="fas fa-users"></i> Manage Users
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('admin.create_user') }}">
+            <i class="fas fa-user-plus"></i> Create User
+          </a>
+        </li>
+        {% endif %}
+        {% endif %}
+      </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content mt-5">
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
+      <div
+        class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show"
+      >
+        {{ message }}
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+        ></button>
+      </div>
+      {% endfor %} {% endif %} {% endwith %} {% block content %}{% endblock %}
+    </div>
+
+    <footer class="py-3 bg-light">
+      <div class="container text-center">
+        <p>
+          &copy; {{ now.year if now else 2023 }} AI Research Assistant. All
+          rights reserved.
+        </p>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Toggle sidebar on mobile
+        const sidebarToggle = document.querySelector(".sidebar-toggle");
+        const sidebar = document.querySelector(".sidebar");
+        const mainContent = document.querySelector(".main-content");
+        const footer = document.querySelector("footer");
+
+        if (sidebarToggle) {
+          sidebarToggle.addEventListener("click", function () {
+            sidebar.classList.toggle("active");
+            mainContent.classList.toggle("active");
+            footer.classList.toggle("active");
+          });
+        }
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener("click", function (event) {
+          const isClickInsideSidebar = sidebar.contains(event.target);
+          const isClickOnToggle = sidebarToggle.contains(event.target);
+
+          if (
+            !isClickInsideSidebar &&
+            !isClickOnToggle &&
+            window.innerWidth <= 768 &&
+            sidebar.classList.contains("active")
+          ) {
+            sidebar.classList.remove("active");
+            mainContent.classList.remove("active");
+            footer.classList.remove("active");
+          }
+        });
+      });
+    </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

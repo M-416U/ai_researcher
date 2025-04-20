@@ -1,0 +1,238 @@
+{% extends 'base.html' %} {% block title %}{{ project.title }} - AI Research
+Assistant{% endblock %} {% block styles %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/export_paper.css') }}"
+/>
+{% endblock %} {% block content %}
+<div class="card shadow-sm">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h3 class="card-title mb-0">
+      <i class="fas fa-file-alt me-2"></i>{{ project.title }}
+    </h3>
+    <div class="btn-toolbar">
+      <div class="btn-group me-2">
+        <a
+          href="{{ url_for('research_views.project_detail', project_id=project.id) }}"
+          class="btn btn-outline-secondary"
+        >
+          <i class="fas fa-arrow-left me-1"></i> Back
+        </a>
+      </div>
+      <div class="btn-group">
+        <form method="POST" class="d-inline">
+          <button
+            type="submit"
+            name="export"
+            class="btn btn-primary"
+            id="generatePdfBtn"
+          >
+            <i class="fas fa-file-pdf me-1"></i> Generate PDF
+          </button>
+        </form>
+        <button
+          id="downloadPdf"
+          class="btn btn-success"
+          {%
+          if
+          not
+          export_result
+          %}disabled{%
+          endif
+          %}
+        >
+          <i class="fas fa-download me-1"></i> Download PDF
+        </button>
+        <button
+          id="toggleView"
+          class="btn btn-info view-toggle-btn active"
+          data-view="preview"
+        >
+          <i class="fas fa-eye me-1"></i> Toggle View
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add this right after the card-body opening tag -->
+  <div class="card-body">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    
+    <!-- Rest of the card-body content remains the same -->
+    <!-- PDF Viewer -->
+    <div
+      id="pdfViewer"
+      class="pdf-container"
+      {%
+      if
+      not
+      export_result
+      %}style="display:none"
+      {%
+      endif
+      %}
+    >
+      <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner-container">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p id="loadingMessage" class="mt-2">Loading PDF...</p>
+        </div>
+      </div>
+      {% if export_result and export_result.filepath %}
+      <iframe
+        src="{{ url_for('static', filename='exports/' + export_result.filepath.split('/')[-1]) }}"
+        width="100%"
+        height="800px"
+        frameborder="0"
+      ></iframe>
+      {% else %}
+      <div class="alert alert-info text-center">
+        <i class="fas fa-info-circle me-2"></i>
+        Click "Generate PDF" to create a PDF version of your research paper
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Content Preview -->
+    <div id="contentPreview" class="content-preview-container">
+      <div class="text-center mb-4">
+        <h1>{{ project.title }}</h1>
+        <p class="text-muted">Generated on {{ now.strftime('%B %d, %Y') }}</p>
+      </div>
+
+      <!-- Table of Contents -->
+      <div class="table-of-contents mb-4">
+        <h2 id="toc"><i class="fas fa-list me-2"></i>Table of Contents</h2>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item">
+            <a href="#introduction" class="text-decoration-none"
+              >Introduction</a
+            >
+            {% set intro_title = 'Introduction' if project.language == 'en' else
+            'المقدمة' %} {% if intro_title in sections_with_content %}
+            <span class="badge bg-success ms-2">Generated</span>
+            {% else %}
+            <span class="badge bg-warning ms-2">Pending</span>
+            {% endif %}
+          </li>
+
+          {% for section in outline_structure.get('sections', []) %}
+          <li class="list-group-item">
+            <a href="#section-{{ loop.index }}" class="text-decoration-none"
+              >{{ section.title }}</a
+            >
+            {% if section.title in sections_with_content %}
+            <span class="badge bg-success ms-2">Generated</span>
+            {% else %}
+            <span class="badge bg-warning ms-2">Pending</span>
+            {% endif %}
+          </li>
+          {% endfor %}
+
+          <li class="list-group-item">
+            <a href="#conclusion" class="text-decoration-none">Conclusion</a>
+            {% set conclusion_title = 'Conclusion' if project.language == 'en'
+            else 'الخاتمة' %} {% if conclusion_title in sections_with_content %}
+            <span class="badge bg-success ms-2">Generated</span>
+            {% else %}
+            <span class="badge bg-warning ms-2">Pending</span>
+            {% endif %}
+          </li>
+
+          <li class="list-group-item">
+            <a href="#references" class="text-decoration-none">References</a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Introduction -->
+      {% set intro_title = 'Introduction' if project.language == 'en' else
+      'المقدمة' %}
+      <div class="mb-4">
+        <h2 id="introduction">
+          <i class="fas fa-info-circle me-2"></i>{{ intro_title }}
+        </h2>
+        {% if intro_title in sections_with_content %}
+        <div class="content-preview" onclick="toggleContentPreview(this)">
+          {{ sections_with_content[intro_title].content|safe }}
+        </div>
+        {% else %}
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>Introduction has not
+          been generated yet.
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Main Sections -->
+      {% for section in outline_structure.get('sections', []) %}
+      <div class="mb-4">
+        <h2 id="section-{{ loop.index }}">
+          <i class="fas fa-bookmark me-2"></i>{{ section.title }}
+        </h2>
+        {% if section.title in sections_with_content %}
+        <div class="content-preview" onclick="toggleContentPreview(this)">
+          {{ sections_with_content[section.title].content|safe }}
+        </div>
+        {% else %}
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>Content for this
+          section has not been generated yet.
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+
+      <!-- Conclusion -->
+      {% set conclusion_title = 'Conclusion' if project.language == 'en' else
+      'الخاتمة' %}
+      <div class="mb-4">
+        <h2 id="conclusion">
+          <i class="fas fa-check-circle me-2"></i>{{ conclusion_title }}
+        </h2>
+        {% if conclusion_title in sections_with_content %}
+        <div class="content-preview" onclick="toggleContentPreview(this)">
+          {{ sections_with_content[conclusion_title].content|safe }}
+        </div>
+        {% else %}
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>Conclusion has not
+          been generated yet.
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- References -->
+      <div class="mb-4">
+        <h2 id="references"><i class="fas fa-book me-2"></i>References</h2>
+        <ul class="list-group">
+          {% set all_citations = namespace(ids=[]) %} {% for section_title,
+          content in sections_with_content.items() %} {% set citations =
+          content.get_citations() %} {% for citation in citations %} {% if
+          citation.id not in all_citations.ids %}
+          <li class="list-group-item">{{ citation.text }}</li>
+          {% set _ = all_citations.ids.append(citation.id) %} {% endif %} {%
+          endfor %} {% endfor %} {% if all_citations.ids|length == 0 %}
+          <li class="list-group-item text-muted">
+            No references available yet.
+          </li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/export_paper.js') }}"></script>
+{% endblock %}

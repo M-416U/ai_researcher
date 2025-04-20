@@ -1,0 +1,79 @@
+alembic @ file:///home/conda/feedstock_root/build_artifacts/alembic_1743207807124/work
+arabic-reshaper==3.0.0
+beautifulsoup4==4.13.4
+black==23.3.0
+blinker==1.9.0
+Brotli==1.1.0
+cachetools==5.5.2
+certifi==2025.1.31
+cffi==1.17.1
+chardet==5.2.0
+charset-normalizer==3.4.1
+click @ file:///D:/bld/click_1734858834134/work
+colorama @ file:///home/conda/feedstock_root/build_artifacts/colorama_1733218098505/work
+cssselect2==0.8.0
+exceptiongroup==1.2.2
+flake8==6.0.0
+Flask==2.3.3
+Flask-JWT-Extended==4.7.1
+Flask-Migrate @ file:///home/conda/feedstock_root/build_artifacts/flask-migrate_1675404414747/work
+Flask-SQLAlchemy==3.1.1
+fonttools==4.57.0
+fpdf==1.7.2
+google-ai-generativelanguage==0.4.0
+google-api-core==2.24.2
+google-auth==2.39.0
+google-generativeai==0.3.1
+googleapis-common-protos==1.70.0
+greenlet @ file:///D:/bld/greenlet_1744755716737/work
+grpcio==1.71.0
+grpcio-status==1.62.3
+idna==3.10
+importlib_metadata @ file:///home/conda/feedstock_root/build_artifacts/importlib-metadata_1737420181517/work
+iniconfig==2.1.0
+itsdangerous @ file:///home/conda/feedstock_root/build_artifacts/itsdangerous_1733308265247/work
+Jinja2 @ file:///home/conda/feedstock_root/build_artifacts/jinja2_1741263328855/work
+lxml==5.3.2
+Mako @ file:///home/conda/feedstock_root/build_artifacts/mako_1744317760971/work
+Markdown @ file:///home/conda/feedstock_root/build_artifacts/markdown_1679584000376/work
+MarkupSafe @ file:///D:/bld/markupsafe_1733219610373/work
+mccabe==0.7.0
+mypy-extensions==1.0.0
+packaging==24.2
+pathspec==0.12.1
+pdfkit==1.0.0
+pillow==11.2.1
+platformdirs==4.3.7
+pluggy==1.5.0
+proto-plus==1.26.1
+protobuf==4.25.6
+pyasn1==0.6.1
+pyasn1_modules==0.4.2
+pycodestyle==2.10.0
+pycparser==2.22
+pydyf==0.11.0
+pyflakes==3.0.1
+PyJWT @ file:///home/conda/feedstock_root/build_artifacts/pyjwt_1732782409051/work
+PyPDF2==3.0.1
+pyphen==0.17.2
+pytest==7.3.1
+python-bidi==0.6.6
+python-docx==1.1.2
+python-dotenv @ file:///home/conda/feedstock_root/build_artifacts/python-dotenv-split_1693865766170/work
+pywin32==310
+reportlab==4.4.0
+requests==2.32.3
+rsa==4.9.1
+soupsieve==2.6
+SQLAlchemy @ file:///D:/bld/sqlalchemy_1743109472800/work
+tinycss2==1.4.0
+tinyhtml5==2.0.0
+tomli==2.2.1
+tqdm==4.67.1
+typing_extensions @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_typing_extensions_1744302253/work
+urllib3==2.4.0
+weasyprint==65.1
+webencodings==0.5.1
+Werkzeug==3.1.3
+zipp @ file:///home/conda/feedstock_root/build_artifacts/zipp_1732827521216/work
+zopfli==0.2.3.post1

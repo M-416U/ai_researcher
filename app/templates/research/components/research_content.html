@@ -1,0 +1,39 @@
+<div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Research Content</h3>
+        <span class="badge bg-primary"
+          >Total Pages: {{ outline.total_pages }}</span
+        >
+      </div>
+      <div class="card-body">
+        {% set outline_structure = outline.get_outline_structure() %} 
+        {% set intro_title = 'المقدمة' if project.language == 'ar' else 'Introduction' %} 
+        {% set conclusion_title = 'الخاتمة' if project.language == 'ar' else 'Conclusion' %}
+
+        <!-- Progress Bar -->
+        {% include 'research/components/content_progress_bar.html' %}
+
+        <div class="accordion" id="contentAccordion">
+          <!-- Introduction -->
+          {% include 'research/components/content_section.html' with context %}
+          
+          <!-- Main Sections -->
+          {% for section in outline_structure.get('sections', []) %}
+            {% set section_title = section.title %}
+            {% set section_pages = section.pages|default(1) %}
+            {% set section_index = loop.index %}
+            {% include 'research/components/content_section_item.html' with context %}
+          {% endfor %}
+          
+          <!-- Conclusion -->
+          {% set section_title = conclusion_title %}
+          {% set section_pages = outline_structure.conclusion_pages|default(1) %}
+          {% set section_index = 'Conclusion' %}
+          {% include 'research/components/content_section_item.html' with context %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

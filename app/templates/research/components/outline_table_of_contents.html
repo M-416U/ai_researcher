@@ -1,0 +1,42 @@
+<div class="mb-4">
+  <h5>Table of Contents:</h5>
+  <div class="table-responsive">
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>
+            {% if project.language == 'ar' %}العنوان{% else %}Title{%
+            endif %}
+          </th>
+          <th>
+            {% if project.language == 'ar' %}الصفحة{% else %}Page{% endif
+            %}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set index = outline.generate_index(project.language) %} {% for
+        item in index %}
+        <tr>
+          <td
+            {%
+            if
+            item.indent
+            is
+            defined
+            and
+            item.indent
+            %}class="ps-4"
+            {%
+            endif
+            %}
+          >
+            {{ item.title }}
+          </td>
+          <td>{{ item.page }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

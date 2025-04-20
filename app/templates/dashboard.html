@@ -1,0 +1,147 @@
+{% extends 'base.html' %} {% block title %}Dashboard - AI Research Assistant{%
+endblock %} {% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1>Welcome, {{ user.username }}!</h1>
+      <a
+        href="{{ url_for('research_views.new_project') }}"
+        class="btn btn-success"
+      >
+        <i class="fas fa-plus-circle me-2"></i>New Project
+      </a>
+    </div>
+
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Research Overview</h5>
+            <div class="row text-center">
+              <div class="col-md-4">
+                <div class="border-end">
+                  <h3 class="fw-bold">{{ projects|length }}</h3>
+                  <p class="text-muted">Total Projects</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="border-end">
+                  <h3 class="fw-bold">{{ recent_activity|default(0) }}</h3>
+                  <p class="text-muted">Recent Activities</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <h3 class="fw-bold">{{ completed_projects|default(0) }}</h3>
+                <p class="text-muted">Completed Projects</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="mb-3">Your Research Projects</h2>
+
+    {% if projects %}
+    <div class="row">
+      {% for project in projects %}
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5 class="card-title">{{ project.title }}</h5>
+            <p class="card-text">
+              {{ project.description or 'No description provided.' }}
+            </p>
+            <div class="d-flex justify-content-between">
+              <div>
+                <span class="badge bg-primary">{{ project.language }}</span>
+                <span class="badge bg-secondary"
+                  >{{ project.citation_style }}</span
+                >
+              </div>
+              <small class="text-muted"
+                >Created: {{ project.created_at.strftime('%Y-%m-%d') }}</small
+              >
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="d-flex justify-content-between">
+              <a
+                href="{{ url_for('research_views.project_detail', project_id=project.id) }}"
+                class="btn btn-primary"
+              >
+                <i class="fas fa-eye me-1"></i>View Project
+              </a>
+              <button
+                type="button"
+                class="btn btn-outline-danger"
+                data-bs-toggle="modal"
+                data-bs-target="#deleteModal{{ project.id }}"
+              >
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delete Modal for each project -->
+      <div
+        class="modal fade"
+        id="deleteModal{{ project.id }}"
+        tabindex="-1"
+        aria-labelledby="deleteModalLabel{{ project.id }}"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="deleteModalLabel{{ project.id }}">
+                Confirm Deletion
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              Are you sure you want to delete the project "{{ project.title }}"?
+              This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Cancel
+              </button>
+              <form
+                action="{{ url_for('research_views.delete_project', project_id=project.id) }}"
+                method="POST"
+                style="display: inline"
+              >
+                <button type="submit" class="btn btn-danger">Delete</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+      <p>You don't have any research projects yet.</p>
+      <a
+        href="{{ url_for('research_views.new_project') }}"
+        class="btn btn-success"
+      >
+        <i class="fas fa-plus-circle me-2"></i>Create Your First Project
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,71 @@
+<div class="accordion-item">
+  <h2 class="accordion-header">
+    <button
+      class="accordion-button collapsed"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#collapseIntro"
+    >
+      {{ intro_title }}
+      <span class="badge bg-info ms-2"
+        >Pages: {{ outline_structure.introduction_pages|default(1)
+        }}</span
+      >
+
+      {% set intro_content = namespace(found=None) %} 
+      {% for content in content_sections %} 
+        {% if content.section_title == intro_title %} 
+          {% set intro_content.found = content %} 
+        {% endif %} 
+      {% endfor %} 
+      
+      {% if intro_content.found %}
+      <span class="badge bg-success ms-2">Generated</span>
+      {% else %}
+      <span class="badge bg-warning ms-2">Pending</span>
+      {% endif %}
+    </button>
+  </h2>
+  <div
+    id="collapseIntro"
+    class="accordion-collapse collapse"
+    data-bs-parent="#contentAccordion"
+  >
+    <div class="accordion-body">
+      {% set intro_content = namespace(found=None) %} 
+      {% for content in content_sections %} 
+        {% if content.section_title == intro_title %} 
+          {% set intro_content.found = content %} 
+        {% endif %} 
+      {% endfor %} 
+      
+      {% if intro_content.found %}
+      <div class="content-preview border p-3 rounded bg-light">
+        {{ intro_content.found.content|safe }}
+      </div>
+      <div class="mt-2">
+        <small class="text-muted"
+          >Words: {{ intro_content.found.content|wordcount }}</small
+        >
+      </div>
+      <div class="mt-2">
+        <button
+          class="btn btn-sm btn-outline-primary generate-content-btn"
+          data-project-id="{{ project.id }}"
+          data-section-title="{{ intro_title }}"
+        >
+          <i class="fas fa-sync me-1"></i>Regenerate
+        </button>
+      </div>
+      {% else %}
+      <button
+        class="btn btn-primary generate-content-btn"
+        data-project-id="{{ project.id }}"
+        data-section-title="{{ intro_title }}"
+      >
+        <i class="fas fa-magic me-1"></i>Generate Content
+      </button>
+      {% endif %}
+    </div>
+  </div>
+</div>

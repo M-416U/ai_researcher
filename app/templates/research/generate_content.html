@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}Generate Content - AI Research Assistant{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-8 offset-md-2">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Generate Section Content</h3>
+      </div>
+      <div class="card-body">
+        <h4 class="mb-3">Project: {{ project.title }}</h4>
+        <p>{{ project.description or 'No description provided.' }}</p>
+
+        <div class="mb-4">
+          <h5>Section: {{ section_title }}</h5>
+        </div>
+
+        <form id="generateForm" method="POST">
+          <div class="alert alert-info">
+            <p class="mb-0">
+              <strong>Note:</strong> Content will be generated in real-time.
+              You can see the progress below.
+            </p>
+          </div>
+
+          <div id="generationProgress" class="d-none">
+            <div class="progress mb-3">
+              <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"></div>
+            </div>
+            <div id="contentPreview" class="border p-3 rounded bg-light mb-3" style="min-height: 200px;">
+              <div id="generatedContent"></div>
+              <div id="citations" class="mt-3 d-none">
+                <h6>Citations:</h6>
+                <ul id="citationsList"></ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary" id="generateBtn">
+              Generate Content
+            </button>
+            <a href="{{ url_for('research_views.project_detail', project_id=project.id) }}"
+              class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('generateForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const generateBtn = document.getElementById('generateBtn');
+  const progressDiv = document.getElementById('generationProgress');
+  const contentDiv = document.getElementById('generatedContent');
+  const citationsDiv = document.getElementById('citations');
+  const citationsList = document.getElementById('citationsList');
+  
+  generateBtn.disabled = true;
+  progressDiv.classList.remove('d-none');
+  contentDiv.innerHTML = '';
+  citationsDiv.classList.add('d-none');
+  citationsList.innerHTML = '';
+
+  try {
+    const response = await fetch(window.location.href, {
+      method: 'POST',
+      headers: {
+        'Accept': 'text/event-stream',
+        'Content-Type': 'application/json',
+      },
+      credentials: 'same-origin'
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    contentDiv.innerHTML = '<div class="alert alert-info">Generation started...</div>';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = JSON.parse(line.slice(5));
+
+          if (data.error) {
+            contentDiv.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+            generateBtn.disabled = false;
+            return;
+          }
+
+          if (data.complete) {
+            contentDiv.innerHTML = data.content.content;
+            if (data.content.citations && data.content.citations.length > 0) {
+              citationsDiv.classList.remove('d-none');
+              data.content.citations.forEach(citation => {
+                citationsList.innerHTML += `<li>${citation.text}</li>`;
+              });
+            }
+            generateBtn.disabled = false;
+            
+            // Handle redirect based on redirect_to parameter
+            setTimeout(() => {
+              if (data.redirect_to === 'export') {
+                window.location.href = "{{ url_for('research_views.export_paper', project_id=project.id) }}";
+              } else {
+                window.location.href = "{{ url_for('research_views.project_detail', project_id=project.id) }}";
+              }
+            }, 2000);
+            return;
+          }
+
+          // Update progress
+          if (data.content && data.content.content) {
+            contentDiv.innerHTML = data.content.content;
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Fetch error:', error);
+    generateBtn.disabled = false;
+    contentDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}. Please try again.</div>`;
+  }
+});
+</script>
+{% endblock %}

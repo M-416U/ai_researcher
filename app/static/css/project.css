@@ -1,0 +1,145 @@
+/* Loading overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s, opacity 0.3s;
+}
+
+.loading-overlay.active {
+  visibility: visible;
+  opacity: 1;
+}
+
+.spinner-container {
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.loading-message {
+  margin-top: 15px;
+  font-weight: bold;
+}
+
+/* Content preview */
+.content-preview {
+  max-height: 200px;
+  overflow-y: hidden;
+  transition: max-height 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  padding: 1rem;
+  border-radius: 0.375rem;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+}
+
+.content-preview::after {
+  content: "Click to expand";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(248, 249, 250, 0.9));
+  padding: 0.5rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.content-preview.expanded {
+  max-height: none;
+}
+
+.content-preview.expanded::after {
+  content: "Click to collapse";
+  background: none;
+}
+
+/* Form containers */
+.outline-form-container {
+  display: none;
+  margin-bottom: 1.5rem;
+}
+
+.outline-form-container.active {
+  display: block;
+  animation: fadeIn 0.3s;
+}
+
+.outline-detail-container {
+  display: none;
+  margin-bottom: 1.5rem;
+}
+
+.outline-detail-container.active {
+  display: block;
+  animation: fadeIn 0.3s;
+}
+
+/* Card styling */
+.card {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  margin-bottom: 1.5rem;
+}
+
+.card-header {
+  background-color: rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-body {
+  padding: 1.25rem;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Accordion styling */
+.accordion-button:not(.collapsed) {
+  background-color: rgba(13, 110, 253, 0.1);
+  color: #0d6efd;
+}
+
+.accordion-button:focus {
+  box-shadow: none;
+  border-color: rgba(13, 110, 253, 0.25);
+}
+
+/* Progress bar */
+.progress {
+  height: 1.5rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.progress-bar {
+  background-color: #0d6efd;
+  color: white;
+  font-weight: 500;
+}

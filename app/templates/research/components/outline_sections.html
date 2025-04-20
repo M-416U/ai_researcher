@@ -1,0 +1,49 @@
+<div class="mb-4">
+  <h5>
+    {% if project.language == 'ar' %}الأقسام{% else %}Sections{% endif %}
+  </h5>
+  <div class="accordion" id="sectionsAccordion">
+    {% for section in structure.sections %}
+    <div class="accordion-item">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#section{{ loop.index }}"
+        >
+          {{ section.title }}
+          <span class="ms-2 badge bg-info">
+            {% if project.language == 'ar' %} {{ section.pages|default(1)
+            }} صفحات {% else %} {{ section.pages|default(1) }} pages {%
+            endif %}
+          </span>
+        </button>
+      </h2>
+      <div
+        id="section{{ loop.index }}"
+        class="accordion-collapse collapse"
+      >
+        <div class="accordion-body">
+          <h6>
+            {% if project.language == 'ar' %}الأقسام الفرعية{% else
+            %}Subsections{% endif %}
+          </h6>
+          <ul class="list-group">
+            {% for subsection in section.subsections %}
+            <li class="list-group-item">
+              <strong>{{ subsection.title }}</strong>
+              <ul class="mt-2">
+                {% for point in subsection.key_points %}
+                <li>{{ point }}</li>
+                {% endfor %}
+              </ul>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>

@@ -1,0 +1,154 @@
+{% extends 'base.html' %} {% block title %}Preview: {{ project.title }} - AI
+Research Assistant{% endblock %} {% block styles %}
+<style>
+  .paper-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .paper-title {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .paper-section {
+    margin-bottom: 2rem;
+    font-size: 1.5rem;
+  }
+
+  .paper-section h2 {
+    margin-bottom: 1rem;
+  }
+
+  .index-item {
+    margin-bottom: 0.5rem;
+  }
+
+  .index-item.indented {
+    margin-left: 2rem;
+  }
+
+  .rtl {
+    direction: rtl;
+    text-align: right;
+  }
+
+  .export-buttons {
+    margin-bottom: 2rem;
+  }
+
+  @media print {
+    .no-print {
+      display: none;
+    }
+
+    .paper-container {
+      box-shadow: none;
+      padding: 0;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="container py-4">
+  <div class="no-print d-flex justify-content-between align-items-center mb-4">
+    <h1>Paper Preview</h1>
+    <div>
+      <a
+        href="{{ url_for('research_views.project_detail', project_id=project.id) }}"
+        class="btn btn-outline-secondary me-2"
+      >
+        <i class="fas fa-arrow-left me-1"></i>Back to Project
+      </a>
+      <button onclick="window.print()" class="btn btn-outline-primary me-2">
+        <i class="fas fa-print me-1"></i>Print
+      </button>
+    </div>
+  </div>
+
+  <div class="no-print export-buttons text-center">
+    <div class="btn-group">
+      <a
+        href="{{ url_for('research_views.export_pdf', project_id=project.id) }}"
+        class="btn btn-primary"
+      >
+        <i class="fas fa-file-pdf me-1"></i>Export as PDF
+      </a>
+      <a
+        href="{{ url_for('research_views.export_docx', project_id=project.id) }}"
+        class="btn btn-primary"
+      >
+        <i class="fas fa-file-word me-1"></i>Export as DOCX
+      </a>
+    </div>
+  </div>
+
+  <div class="paper-container {% if project.language == 'ar' %}rtl{% endif %}">
+    <!-- Paper Title -->
+    <div class="paper-title">
+      <h1>{{ project.title }}</h1>
+      <p class="text-muted">{{ now.strftime('%Y-%m-%d') }}</p>
+    </div>
+
+    <!-- Table of Contents -->
+    <div class="paper-section">
+      <h2>
+        {% if project.language == 'ar' %}فهرس المحتويات{% else %}Table of
+        Contents{% endif %}
+      </h2>
+      <div class="index-list">
+        {% for item in index %}
+        <div class="index-item {% if item.indent %}indented{% endif %}">
+          {{ item.title }} ........................... {{ item.page }}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Paper Content -->
+    {% for section_title in ordered_sections %} {% if section_title in
+    sections_with_content %}
+    <div class="paper-section">
+      <h2>{{ section_title }}</h2>
+      <div>{{ sections_with_content[section_title].content|safe }}</div>
+    </div>
+    {% else %}
+    <div class="paper-section">
+      <h2>{{ section_title }}</h2>
+      <p class="text-muted">
+        {% if project.language == 'ar' %}المحتوى غير متوفر{% else %}Content not
+        available{% endif %}
+      </p>
+    </div>
+    {% endif %} {% endfor %}
+
+    <!-- References -->
+    <div class="paper-section">
+      <h2>
+        {% if project.language == 'ar' %}المراجع{% else %}References{% endif %}
+      </h2>
+      <div class="references-list">
+        {% set all_citations = [] %} {% for section_title, content in
+        sections_with_content.items() %} {% set citations =
+        content.get_citations() %} {% if citations %} {% for citation in
+        citations %} {% if citation not in all_citations %} {% set _ =
+        all_citations.append(citation) %} {% endif %} {% endfor %} {% endif %}
+        {% endfor %} {% if all_citations %}
+        <ol>
+          {% for citation in all_citations %}
+          <li>{{ citation.text }}</li>
+          {% endfor %}
+        </ol>
+        {% else %}
+        <p class="text-muted">
+          {% if project.language == 'ar' %}لا توجد مراجع{% else %}No references
+          available{% endif %}
+        </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

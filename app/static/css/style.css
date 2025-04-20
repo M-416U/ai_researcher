@@ -1,0 +1,49 @@
+/* Main Styles */
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+/* Content Preview */
+.content-preview {
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 0.9rem;
+}
+
+/* Outline Structure */
+.outline-structure .section {
+  border-left: 3px solid #007bff;
+  padding-left: 15px;
+}
+
+.outline-structure .subsection {
+  border-left: 2px solid #6c757d;
+  padding-left: 15px;
+}
+
+/* Card Styling */
+.card {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  border-radius: 0.5rem;
+  border: none;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+/* Button Styling */
+.btn {
+  border-radius: 0.25rem;
+}
+
+/* Footer */
+footer {
+  margin-top: 3rem;
+  padding: 1.5rem 0;
+  color: #6c757d;
+  border-top: 1px solid #dee2e6;
+}

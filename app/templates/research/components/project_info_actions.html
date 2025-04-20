@@ -1,0 +1,67 @@
+<div class="row mb-4">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Project Details</h3>
+      </div>
+      <div class="card-body">
+        <p>
+          <strong>Description:</strong> {{ project.description or 'No
+          description provided.' }}
+        </p>
+        <p>
+          <strong>Language:</strong> {{ 'English' if project.language == 'en'
+          else 'Arabic' }}
+        </p>
+        <p><strong>Citation Style:</strong> {{ project.citation_style }}</p>
+        <p>
+          <strong>Created:</strong> {{ project.created_at.strftime('%Y-%m-%d
+          %H:%M') }}
+        </p>
+        <p>
+          <strong>Last Updated:</strong> {{
+          project.updated_at.strftime('%Y-%m-%d %H:%M') }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Actions</h3>
+      </div>
+      <div class="card-body">
+        {% if not outline %}
+        <div class="d-grid">
+          <button id="generateOutlineBtn" class="btn btn-primary">
+            <i class="fas fa-sitemap me-1"></i>Generate Outline
+          </button>
+        </div>
+        {% elif not outline.is_approved %}
+        <div class="d-grid gap-2">
+          <button id="viewOutlineBtn" class="btn btn-primary">
+            <i class="fas fa-eye me-1"></i>View Outline
+          </button>
+          <button
+            id="approveOutlineBtn"
+            class="btn btn-success"
+            data-outline-id="{{ outline.id }}"
+          >
+            <i class="fas fa-check-circle me-1"></i>Approve Outline
+          </button>
+          <button id="regenerateOutlineBtn" class="btn btn-outline-primary">
+            <i class="fas fa-sync me-1"></i>Regenerate Outline
+          </button>
+        </div>
+        {% else %}
+        <div class="d-grid">
+          <button id="viewOutlineBtn" class="btn btn-primary">
+            <i class="fas fa-eye me-1"></i>View Outline
+          </button>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>

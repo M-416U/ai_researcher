@@ -1,0 +1,50 @@
+<div id="outlineDetailContainer" class="outline-detail-container mb-4">
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h3 class="card-title">Research Outline</h3>
+      <button type="button" class="btn-close" id="closeOutlineDetail"></button>
+    </div>
+    <div class="card-body">
+      {% set structure = outline.get_outline_structure() %}
+      <h4 class="mb-3">{{ structure.title }}</h4>
+
+      <div class="alert alert-info">
+        <strong>Total Pages:</strong> {{ outline.total_pages }}
+      </div>
+
+      <div class="mb-4">
+        <h5>Thesis Statement:</h5>
+        <p class="lead">{{ structure.thesis_statement }}</p>
+      </div>
+
+      <div class="mb-4">
+        <h5>Research Questions:</h5>
+        <ol>
+          {% for question in structure.research_questions %}
+          <li>{{ question }}</li>
+          {% endfor %}
+        </ol>
+      </div>
+
+      <!-- Table of Contents -->
+      {% include 'research/components/outline_table_of_contents.html' %}
+
+      <!-- Sections -->
+      {% include 'research/components/outline_sections.html' %}
+
+      {% if not outline.is_approved %}
+      <div class="d-grid">
+        <button
+          id="approveOutlineFromDetail"
+          class="btn btn-success"
+          data-outline-id="{{ outline.id }}"
+        >
+          <i class="fas fa-check-circle me-1"></i>
+          {% if project.language == 'ar' %}الموافقة على المخطط{% else %}Approve
+          Outline{% endif %}
+        </button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>

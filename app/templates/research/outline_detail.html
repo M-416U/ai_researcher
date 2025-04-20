@@ -1,0 +1,351 @@
+{% extends 'base.html' %} {% block title %}Outline Detail - AI Research
+Assistant{% endblock %} {% block content %}
+<div class="container">
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card">
+        <div
+          class="card-header d-flex justify-content-between align-items-center"
+        >
+          <h3 class="card-title mb-0">Research Outline</h3>
+          <div>
+            <a
+              href="{{ url_for('research_views.project_detail', project_id=project.id) }}"
+              class="btn btn-sm btn-outline-secondary"
+              >Back to Project</a
+            >
+            {% if not outline.is_approved %}
+            <form
+              method="POST"
+              action="{{ url_for('research.approve_outline', outline_id=outline.id) }}"
+              class="d-inline"
+            >
+              <button type="submit" class="btn btn-sm btn-success">
+                Approve Outline
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        <div class="card-body">
+          <h4 class="mb-3">{{ structure.title }}</h4>
+
+          <div class="alert alert-info">
+            <strong>Total Pages:</strong> {{ outline.total_pages }}
+          </div>
+
+          <div class="mb-4">
+            <h5>Thesis Statement:</h5>
+            <p class="lead">{{ structure.thesis_statement }}</p>
+          </div>
+
+          <div class="mb-4">
+            <h5>Research Questions:</h5>
+            <ol>
+              {% for question in structure.research_questions %}
+              <li>{{ question }}</li>
+              {% endfor %}
+            </ol>
+          </div>
+
+          <!-- Index / Table of Contents -->
+          <div class="mb-4">
+            <h5>Table of Contents:</h5>
+            <div class="table-responsive">
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>
+                      {% if project.language == 'ar' %}العنوان{% else %}Title{%
+                      endif %}
+                    </th>
+                    <th>
+                      {% if project.language == 'ar' %}الصفحة{% else %}Page{%
+                      endif %}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% set index = outline.generate_index(project.language) %} {%
+                  for item in index %}
+                  <tr>
+                    <td
+                      {%
+                      if
+                      item.indent
+                      is
+                      defined
+                      and
+                      item.indent
+                      %}class="ps-4"
+                      {%
+                      endif
+                      %}
+                    >
+                      {{ item.title }}
+                    </td>
+                    <td>{{ item.page }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Introduction -->
+          <div class="mb-4">
+            <h5>
+              {% if project.language == 'ar' %}المقدمة{% else %}Introduction{%
+              endif %}
+            </h5>
+            <p class="text-muted">
+              {% if project.language == 'ar' %} عدد الصفحات: {{
+              structure.introduction_pages|default(1) }} (الصفحات {{
+              structure.introduction_page_range.start|default(1) }}-{{
+              structure.introduction_page_range.end|default(1) }}) {% else %}
+              Pages: {{ structure.introduction_pages|default(1) }} (Pages {{
+              structure.introduction_page_range.start|default(1) }}-{{
+              structure.introduction_page_range.end|default(1) }}) {% endif %}
+            </p>
+
+            {% if outline.is_approved %} {% set intro_title = 'المقدمة' if
+            project.language == 'ar' else 'Introduction' %} {% if
+            content_sections and intro_title in content_sections %}
+            <div class="alert alert-success">
+              <i class="fas fa-check-circle"></i>
+              {% if project.language == 'ar' %}تم إنشاء المحتوى{% else %}Content
+              generated{% endif %}
+            </div>
+            {% else %}
+            <div class="dropdown">
+              <button
+                class="btn btn-primary btn-sm dropdown-toggle"
+                type="button"
+                id="introGenDropdown"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <i class="fas fa-magic"></i>
+                {% if project.language == 'ar' %}إنشاء المحتوى{% else %}Generate
+                Content{% endif %}
+              </button>
+              <ul class="dropdown-menu" aria-labelledby="introGenDropdown">
+                <li>
+                  <a
+                    class="dropdown-item"
+                    href="{{ url_for('research_views.generate_content', project_id=project.id, section_title=intro_title, page_by_page='true') }}"
+                  >
+                    {% if project.language == 'ar' %}صفحة بصفحة{% else %}Page by
+                    Page{% endif %}
+                  </a>
+                </li>
+                <li>
+                  <a
+                    class="dropdown-item"
+                    href="{{ url_for('research_views.generate_content', project_id=project.id, section_title=intro_title, page_by_page='false') }}"
+                  >
+                    {% if project.language == 'ar' %}دفعة واحدة{% else %}All at
+                    Once{% endif %}
+                  </a>
+                </li>
+              </ul>
+            </div>
+            {% endif %} {% endif %}
+          </div>
+
+          <!-- Sections -->
+          <div class="mb-4">
+            <h5>
+              {% if project.language == 'ar' %}الأقسام{% else %}Sections{% endif
+              %}
+            </h5>
+            <div class="accordion" id="sectionsAccordion">
+              {% for section in structure.sections %}
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button
+                    class="accordion-button collapsed"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#section{{ loop.index }}"
+                  >
+                    {{ section.title }}
+                    <span class="ms-2 badge bg-info">
+                      {% if project.language == 'ar' %} {{
+                      section.pages|default(1) }} صفحات ({{
+                      section.page_range.start|default(1) }}-{{
+                      section.page_range.end|default(1) }}) {% else %} {{
+                      section.pages|default(1) }} pages ({{
+                      section.page_range.start|default(1) }}-{{
+                      section.page_range.end|default(1) }}) {% endif %}
+                    </span>
+
+                    {% if outline.is_approved %} {% if content_sections and
+                    section.title in content_sections %}
+                    <span class="ms-2 badge bg-success">
+                      <i class="fas fa-check-circle"></i>
+                      {% if project.language == 'ar' %}تم إنشاء المحتوى{% else
+                      %}Content generated{% endif %}
+                    </span>
+                    {% endif %} {% endif %}
+                  </button>
+                </h2>
+                <div
+                  id="section{{ loop.index }}"
+                  class="accordion-collapse collapse"
+                >
+                  <div class="accordion-body">
+                    <h6>
+                      {% if project.language == 'ar' %}الأقسام الفرعية{% else
+                      %}Subsections{% endif %}
+                    </h6>
+                    <ul class="list-group mb-3">
+                      {% for subsection in section.subsections %}
+                      <li class="list-group-item">
+                        <strong>{{ subsection.title }}</strong>
+                        <ul class="mt-2">
+                          {% for point in subsection.key_points %}
+                          <li>{{ point }}</li>
+                          {% endfor %}
+                        </ul>
+                      </li>
+                      {% endfor %}
+                    </ul>
+
+                    {% if outline.is_approved %} {% if content_sections and
+                    section.title in content_sections %}
+                    <div class="alert alert-success">
+                      <i class="fas fa-check-circle"></i>
+                      {% if project.language == 'ar' %}تم إنشاء المحتوى{% else
+                      %}Content generated{% endif %}
+                    </div>
+                    {% else %}
+                    <div class="dropdown">
+                      <button
+                        class="btn btn-primary btn-sm dropdown-toggle"
+                        type="button"
+                        id="section{{ loop.index }}GenDropdown"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                      >
+                        <i class="fas fa-magic"></i>
+                        {% if project.language == 'ar' %}إنشاء المحتوى{% else
+                        %}Generate Content{% endif %}
+                      </button>
+                      <ul
+                        class="dropdown-menu"
+                        aria-labelledby="section{{ loop.index }}GenDropdown"
+                      >
+                        <li>
+                          <a
+                            class="dropdown-item"
+                            href="{{ url_for('research_views.generate_content', project_id=project.id, section_title=section.title, page_by_page='true') }}"
+                          >
+                            {% if project.language == 'ar' %}صفحة بصفحة{% else
+                            %}Page by Page{% endif %}
+                          </a>
+                        </li>
+                        <li>
+                          <a
+                            class="dropdown-item"
+                            href="{{ url_for('research_views.generate_content', project_id=project.id, section_title=section.title, page_by_page='false') }}"
+                          >
+                            {% if project.language == 'ar' %}دفعة واحدة{% else
+                            %}All at Once{% endif %}
+                          </a>
+                        </li>
+                      </ul>
+                    </div>
+                    {% endif %} {% endif %}
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Conclusion -->
+          <div class="mb-4">
+            <h5>
+              {% if project.language == 'ar' %}الخاتمة{% else %}Conclusion{%
+              endif %}
+            </h5>
+            <p class="text-muted">
+              {% if project.language == 'ar' %} عدد الصفحات: {{
+              structure.conclusion_pages|default(1) }} (الصفحات {{
+              structure.conclusion_page_range.start|default(1) }}-{{
+              structure.conclusion_page_range.end|default(1) }}) {% else %}
+              Pages: {{ structure.conclusion_pages|default(1) }} (Pages {{
+              structure.conclusion_page_range.start|default(1) }}-{{
+              structure.conclusion_page_range.end|default(1) }}) {% endif %}
+            </p>
+
+            {% if outline.is_approved %} {% set conclusion_title = 'الخاتمة' if
+            project.language == 'ar' else 'Conclusion' %} {% if content_sections
+            and conclusion_title in content_sections %}
+            <div class="alert alert-success">
+              <i class="fas fa-check-circle"></i>
+              {% if project.language == 'ar' %}تم إنشاء المحتوى{% else %}Content
+              generated{% endif %}
+            </div>
+            {% else %}
+            <div class="dropdown">
+              <button
+                class="btn btn-primary btn-sm dropdown-toggle"
+                type="button"
+                id="conclusionGenDropdown"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <i class="fas fa-magic"></i>
+                {% if project.language == 'ar' %}إنشاء المحتوى{% else %}Generate
+                Content{% endif %}
+              </button>
+              <ul class="dropdown-menu" aria-labelledby="conclusionGenDropdown">
+                <li>
+                  <a
+                    class="dropdown-item"
+                    href="{{ url_for('research_views.generate_content', project_id=project.id, section_title=conclusion_title, page_by_page='true') }}"
+                  >
+                    {% if project.language == 'ar' %}صفحة بصفحة{% else %}Page by
+                    Page{% endif %}
+                  </a>
+                </li>
+                <li>
+                  <a
+                    class="dropdown-item"
+                    href="{{ url_for('research_views.generate_content', project_id=project.id, section_title=conclusion_title, page_by_page='false') }}"
+                  >
+                    {% if project.language == 'ar' %}دفعة واحدة{% else %}All at
+                    Once{% endif %}
+                  </a>
+                </li>
+              </ul>
+            </div>
+            {% endif %} {% endif %}
+          </div>
+        </div>
+        <div class="card-footer text-end">
+          <div class="btn-group">
+            <a
+              href="{{ url_for('research_views.project_detail', project_id=project.id) }}"
+              class="btn btn-outline-secondary"
+              >Back to Project</a
+            >
+            {% if not outline.is_approved %}
+            <form
+              method="POST"
+              action="{{ url_for('research.approve_outline', outline_id=outline.id) }}"
+            >
+              <button type="submit" class="btn btn-success">
+                Approve Outline
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

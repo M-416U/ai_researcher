@@ -1,0 +1,15 @@
+<div class="progress mb-4">
+  {% set total_words = namespace(value=0) %} 
+  {% for content in content_sections %} 
+    {% set total_words.value = total_words.value + content.content|wordcount %} 
+  {% endfor %}
+
+  <div
+    class="progress-bar"
+    role="progressbar"
+    style="width: {{ (total_words.value / (outline.total_pages * 250)) * 100 }}%"
+  >
+    {{ total_words.value }} words / {{ outline.total_pages * 250 }}
+    target
+  </div>
+</div>

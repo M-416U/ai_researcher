@@ -1,0 +1,82 @@
+{% extends 'base.html' %} {% block title %}New Project - AI Research Assistant{%
+endblock %} {% block content %}
+<div class="row">
+  <div class="col-md-8 offset-md-2">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Create New Research Project</h3>
+      </div>
+      <div class="card-body">
+        <form
+          method="POST"
+          action="{{ url_for('research_views.new_project') }}"
+        >
+          <div class="mb-3">
+            <label for="title" class="form-label">Project Title</label>
+            <input
+              type="text"
+              class="form-control"
+              id="title"
+              name="title"
+              required
+            />
+            <div class="form-text">
+              Enter a descriptive title for your research project
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea
+              class="form-control"
+              id="description"
+              name="description"
+              rows="3"
+            ></textarea>
+            <div class="form-text">
+              Briefly describe the purpose and scope of your research
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="language" class="form-label">Language</label>
+              <select class="form-select" id="language" name="language">
+                <option value="en" selected>English</option>
+                <option value="ar">Arabic</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label for="citation_style" class="form-label"
+                >Citation Style</label
+              >
+              <select
+                class="form-select"
+                id="citation_style"
+                name="citation_style"
+              >
+                <option value="APA" selected>APA</option>
+                <option value="MLA">MLA</option>
+                <option value="Chicago">Chicago</option>
+                <option value="Harvard">Harvard</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary">
+              Create Project
+            </button>
+            <a
+              href="{{ url_for('research_views.projects') }}"
+              class="btn btn-outline-secondary"
+              >Cancel</a
+            >
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

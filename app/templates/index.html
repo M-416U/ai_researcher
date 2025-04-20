@@ -1,0 +1,65 @@
+{% extends 'base.html' %} {% block title %}AI Research Assistant - Home{%
+endblock %} {% block content %}
+<div class="row">
+  <div class="col-md-8 offset-md-2 text-center">
+    <h1 class="display-4 mb-4">AI Research Assistant</h1>
+    <p class="lead">
+      Streamline your academic research process with AI assistance while
+      maintaining scholarly integrity.
+    </p>
+    <div class="mt-5">
+      <h2>Core Capabilities</h2>
+      <div class="row mt-4">
+        <div class="col-md-4">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">Smart Research Scaffolding</h5>
+              <ul class="list-unstyled">
+                <li>Multi-page paper generation</li>
+                <li>Dynamic complexity adjustment</li>
+                <li>Bilingual output (EN/AR)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">Integrity Assurance</h5>
+              <ul class="list-unstyled">
+                <li>Automated citation formatting</li>
+                <li>Plagiarism prevention</li>
+                <li>Source reliability scoring</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">Collaboration Suite</h5>
+              <ul class="list-unstyled">
+                <li>Version-controlled drafting</li>
+                <li>Multi-researcher workflow</li>
+                <li>Peer review management</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-5">
+      <a
+        href="{{ url_for('auth_views.register') }}"
+        class="btn btn-primary btn-lg"
+        >Get Started</a
+      >
+      <a
+        href="{{ url_for('auth_views.login') }}"
+        class="btn btn-outline-primary btn-lg ms-3"
+        >Login</a
+      >
+    </div>
+  </div>
+</div>
+{% endblock %}

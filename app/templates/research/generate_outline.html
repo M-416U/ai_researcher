@@ -1,0 +1,66 @@
+{% extends 'base.html' %} {% block title %}Generate Outline - AI Research
+Assistant{% endblock %} {% block content %}
+<div class="row">
+  <div class="col-md-8 offset-md-2">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Generate Research Outline</h3>
+      </div>
+      <div class="card-body">
+        <h4 class="mb-3">Project: {{ project.title }}</h4>
+        <p>{{ project.description or 'No description provided.' }}</p>
+
+        <form
+          method="POST"
+          action="{{ url_for('research_views.generate_outline', project_id=project.id) }}"
+        >
+          <div class="mb-3">
+            <label for="complexity" class="form-label">Complexity Level</label>
+            <select class="form-select" id="complexity" name="complexity">
+              <option value="basic">Basic (Undergraduate Level)</option>
+              <option value="medium" selected>Medium (Graduate Level)</option>
+              <option value="advanced">Advanced (Doctoral Level)</option>
+            </select>
+            <div class="form-text">
+              Select the complexity level for your research outline
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="total_pages" class="form-label">Total Pages</label>
+            <input
+              type="number"
+              class="form-control"
+              id="total_pages"
+              name="total_pages"
+              required
+              value="10"
+            />
+            <div class="form-text">
+              How many pages do you want your research to be?
+            </div>
+          </div>
+
+          <div class="alert alert-info">
+            <p class="mb-0">
+              <strong>Note:</strong> Generating an outline may take a few
+              moments. The AI will create a structured outline based on your
+              project title and selected complexity level.
+            </p>
+          </div>
+
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary">
+              Generate Outline
+            </button>
+            <a
+              href="{{ url_for('research_views.project_detail', project_id=project.id) }}"
+              class="btn btn-outline-secondary"
+              >Cancel</a
+            >
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
