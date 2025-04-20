@@ -4,7 +4,7 @@ from app.models.research import ResearchProject, ResearchOutline
 from app.models.content import ResearchContent
 import os
 
-app = create_app()
+app = create_app(os.environ.get('FLASK_ENV', 'production'))
 
 @app.shell_context_processor
 def make_shell_context():
@@ -37,4 +37,8 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         create_admin_user()
-    app.run(debug=True)
+    # Use host and port from environment variables for deployment
+    host = os.environ.get('HOST', '0.0.0.0')
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(host=host, port=port, debug=debug)
