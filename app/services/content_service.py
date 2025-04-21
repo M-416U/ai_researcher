@@ -269,7 +269,7 @@ class ContentService:
         5. Write approximately {target_words} words for this page
         6. This is page {page_range['start']} in the final document
         7. If this is not the first page, continue naturally from the previous content
-        
+        8. write the content in markdown format
         Format your response as a structured JSON object with the following schema:
         {{
             "section_title": "{section_title}",
@@ -277,7 +277,7 @@ class ContentService:
             "citations": [
                 {{
                     "id": "citation1",
-                    "text": "Full citation text in {citation_style} format",
+                    "text": "Full citation text in {citation_style} format", // (markdown)
                     "source_type": "journal/book/website/etc.",
                 }},
                 ...
@@ -335,11 +335,11 @@ class ContentService:
         5. قم بتنظيم المحتوى في فقرات واضحة
         6. هذه هي الصفحة {page_range['start']} في البحث النهائي
         7. إذا لم تكن هذه الصفحة الأولى، استمر بشكل طبيعي من المحتوى السابق
-        
+        8. قم بكنابة المحتوى باسلوب (markdown)
         قم بتنسيق الإجابة بتنسيق JSON كما يلي:
         {{
             "section_title": "{section_title}",
-            "content": "محتوى هذه الصفحة مع المراجع بتنسيق {citation_style}",
+            "content": "محتوى هذه الصفحة مع المراجع بتنسيق {citation_style}", // (markdown)
             "citations": [
                 {{
                     "id": "citation1",
@@ -414,18 +414,22 @@ class ContentService:
 
                 # Try to fix unescaped quotes in strings
                 fixed_json = self._fix_unescaped_quotes(fixed_json)
-                
+
                 # Additional fixes for Arabic text and newlines
                 fixed_json = self._fix_arabic_json(fixed_json)
-                
+
                 # Try more aggressive JSON repair if still failing
                 try:
                     content_data = json.loads(fixed_json)
                 except json.JSONDecodeError as e2:
-                    logger.warning(f"Standard fixes failed: {str(e2)}, trying advanced repair")
+                    logger.warning(
+                        f"Standard fixes failed: {str(e2)}, trying advanced repair"
+                    )
                     try:
                         # Try manual extraction of key components
-                        content_data = self._manual_json_extraction(fixed_json, section_title)
+                        content_data = self._manual_json_extraction(
+                            fixed_json, section_title
+                        )
                     except Exception as e3:
                         logger.error(f"Failed to parse JSON after all fixes: {str(e3)}")
                         # If all parsing fails, return the raw text with proper structure
@@ -503,55 +507,59 @@ class ContentService:
             result += char
 
         return result
-        
+
     def _fix_arabic_json(self, json_text):
         """Fix common issues with Arabic text in JSON"""
         # Replace problematic newlines within strings
         import re
-        
+
         # First, try to normalize newlines
-        json_text = json_text.replace('\r\n', '\\n').replace('\n', '\\n')
-        
+        json_text = json_text.replace("\r\n", "\\n").replace("\n", "\\n")
+
         # Fix newlines in content field
-        content_pattern = re.compile(r'"content":\s*"(.*?)"(?=\s*,\s*"citations"|$)', re.DOTALL)
+        content_pattern = re.compile(
+            r'"content":\s*"(.*?)"(?=\s*,\s*"citations"|$)', re.DOTALL
+        )
         match = content_pattern.search(json_text)
         if match:
             content = match.group(1)
             # Escape newlines properly
-            fixed_content = content.replace('\n', '\\n')
+            fixed_content = content.replace("\n", "\\n")
             # Replace with fixed content
-            json_text = json_text[:match.start(1)] + fixed_content + json_text[match.end(1):]
-        
+            json_text = (
+                json_text[: match.start(1)] + fixed_content + json_text[match.end(1) :]
+            )
+
         # Fix potential issues with Arabic quotes and special characters
-        json_text = json_text.replace('،', ',')  # Arabic comma
-        json_text = json_text.replace('؛', ';')  # Arabic semicolon
-        json_text = json_text.replace('«', '"').replace('»', '"')  # Arabic quotes
-        json_text = json_text.replace('؟', '?')  # Arabic question mark
-        
+        json_text = json_text.replace("،", ",")  # Arabic comma
+        json_text = json_text.replace("؛", ";")  # Arabic semicolon
+        json_text = json_text.replace("«", '"').replace("»", '"')  # Arabic quotes
+        json_text = json_text.replace("؟", "?")  # Arabic question mark
+
         return json_text
-        
+
     def _manual_json_extraction(self, json_text, section_title):
         """Manually extract JSON components when standard parsing fails"""
         import re
-        
+
         # Initialize with default structure
-        result = {
-            "section_title": section_title,
-            "content": "",
-            "citations": []
-        }
-        
+        result = {"section_title": section_title, "content": "", "citations": []}
+
         # Try to extract section_title
         title_match = re.search(r'"section_title"\s*:\s*"([^"]+)"', json_text)
         if title_match:
             result["section_title"] = title_match.group(1)
-        
+
         # Try to extract content
-        content_match = re.search(r'"content"\s*:\s*"(.*?)(?:"|$)(?=\s*,\s*"citations"|$)', json_text, re.DOTALL)
+        content_match = re.search(
+            r'"content"\s*:\s*"(.*?)(?:"|$)(?=\s*,\s*"citations"|$)',
+            json_text,
+            re.DOTALL,
+        )
         if content_match:
             # Clean up content - replace escaped newlines and quotes
             content = content_match.group(1)
-            content = content.replace('\\n', '\n').replace('\\"', '"')
+            content = content.replace("\\n", "\n").replace('\\"', '"')
             result["content"] = content
         else:
             # If no content match, use everything between content and citations as fallback
@@ -560,14 +568,16 @@ class ContentService:
             if content_start > 0 and citations_start > content_start:
                 content_text = json_text[content_start:citations_start].strip()
                 # Remove the "content": part
-                if ':' in content_text:
-                    content_text = content_text.split(':', 1)[1].strip()
+                if ":" in content_text:
+                    content_text = content_text.split(":", 1)[1].strip()
                 # Remove trailing comma and quotes
-                content_text = content_text.rstrip(',').strip('"')
+                content_text = content_text.rstrip(",").strip('"')
                 result["content"] = content_text
-        
+
         # Try to extract citations
-        citations_match = re.search(r'"citations"\s*:\s*(\[.*?\])', json_text, re.DOTALL)
+        citations_match = re.search(
+            r'"citations"\s*:\s*(\[.*?\])', json_text, re.DOTALL
+        )
         if citations_match:
             citations_text = citations_match.group(1)
             try:
@@ -576,15 +586,18 @@ class ContentService:
                 result["citations"] = citations
             except json.JSONDecodeError:
                 # If parsing fails, try to extract individual citations
-                citation_matches = re.finditer(r'\{\s*"id"\s*:\s*"([^"]+)"\s*,\s*"text"\s*:\s*"([^"]+)"\s*,\s*"source_type"\s*:\s*"([^"]+)"\s*\}', citations_text)
+                citation_matches = re.finditer(
+                    r'\{\s*"id"\s*:\s*"([^"]+)"\s*,\s*"text"\s*:\s*"([^"]+)"\s*,\s*"source_type"\s*:\s*"([^"]+)"\s*\}',
+                    citations_text,
+                )
                 for match in citation_matches:
                     citation = {
                         "id": match.group(1),
                         "text": match.group(2),
-                        "source_type": match.group(3)
+                        "source_type": match.group(3),
                     }
                     result["citations"].append(citation)
-        
+
         return result
 
     def process_json_content(self, json_data, section_title):
