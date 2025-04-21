@@ -21,7 +21,6 @@ def init_db(app):
     """Initialize database and create admin user if needed"""
     with app.app_context():
         db.create_all()
-        # Check if admin user exists
         from app.models.user import User
 
         admin = User.query.filter_by(is_admin=True).first()
@@ -95,11 +94,10 @@ def create_app(config_name="development"):
             pass
         return {"current_user": user, "now": datetime.now()}
 
-    # @app.f
-    # def setup_database():
-    #     from app import init_db
+    def setup_database():
+        from app import init_db
 
-    #     init_db(app)
+        init_db(app)
 
     # At the end of the function, before returning app:
     @app.cli.command("init-db")
@@ -108,4 +106,5 @@ def create_app(config_name="development"):
         init_db(app)
         print("Database initialized with admin user")
 
+    setup_database()
     return app
