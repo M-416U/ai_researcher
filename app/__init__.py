@@ -16,18 +16,20 @@ jwt = JWTManager()
 
 from app.models import *
 
+
 def init_db(app):
     """Initialize database and create admin user if needed"""
     with app.app_context():
         db.create_all()
         # Check if admin user exists
         from app.models.user import User
+
         admin = User.query.filter_by(is_admin=True).first()
         if not admin:
-            username = os.environ.get('ADMIN_USERNAME', 'admin')
-            email = os.environ.get('ADMIN_EMAIL', 'admin@example.com')
-            password = os.environ.get('ADMIN_PASSWORD', 'adminpassword')
-            
+            username = os.environ.get("ADMIN_USERNAME", "admin")
+            email = os.environ.get("ADMIN_EMAIL", "admin@example.com")
+            password = os.environ.get("ADMIN_PASSWORD", "adminpassword")
+
             admin = User(username=username, email=email, is_admin=True)
             admin.set_password(password)
             db.session.add(admin)
@@ -48,7 +50,8 @@ def create_app(config_name="development"):
         app.config.from_object("config.ProductionConfig")
     elif config_name == "testing":
         app.config.from_object("config.TestingConfig")
-
+    db_path = os.path.join(os.getcwd(), "app.db")
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
     # Initialize extensions with app
     db.init_app(app)
     migrate.init_app(app, db)
