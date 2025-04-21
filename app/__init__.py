@@ -95,6 +95,12 @@ def create_app(config_name="development"):
             pass
         return {"current_user": user, "now": datetime.now()}
 
+    @app.before_first_request
+    def setup_database():
+        from app import init_db
+
+        init_db(app)
+
     # At the end of the function, before returning app:
     @app.cli.command("init-db")
     def initialize_db():
