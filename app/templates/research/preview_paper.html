@@ -50,6 +50,61 @@ Research Assistant{% endblock %} {% block styles %}
       padding: 0;
     }
   }
+  .content-line {
+    position: relative;
+    padding-right: 40px;
+    margin-bottom: 0.5rem;
+  }
+
+  .bookmark-btn {
+    position: absolute;
+    right: 0;
+    top: 0;
+    font-size: 0.8rem;
+    padding: 2px 5px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 3px;
+    opacity: 0.3;
+    transition: opacity 0.2s;
+  }
+
+  .content-line:hover .bookmark-btn {
+    opacity: 1;
+  }
+
+  .bookmark-active {
+    background-color: #ffc107;
+    opacity: 1 !important;
+  }
+  .content-paragraph {
+    position: relative;
+    padding-right: 40px;
+  }
+
+  .content-paragraph:hover .bookmark-btn {
+    opacity: 1;
+  }
+
+  .bookmark-active {
+    background-color: #ffc107;
+    opacity: 1 !important;
+  }
+
+  @media print {
+    .no-print {
+      display: none;
+    }
+
+    .bookmark-btn {
+      display: none;
+    }
+
+    .paper-container {
+      box-shadow: none;
+      padding: 0;
+    }
+  }
 </style>
 {% endblock %} {% block content %}
 <div class="container py-4">
@@ -112,7 +167,17 @@ Research Assistant{% endblock %} {% block styles %}
     sections_with_content %}
     <div class="paper-section">
       <h2>{{ section_title }}</h2>
-      <div>{{ sections_with_content[section_title].content|safe }}</div>
+      <div class="section-content" data-section="{{ section_title }}">
+        {% set raw_html = sections_with_content[section_title].content|safe %}
+        {% set lines = raw_html.split('\n') %} {% for line in lines %}
+        <div class="content-line">
+          <button class="bookmark-btn no-print" onclick="toggleBookmark(this)">
+            <i class="fas fa-bookmark"></i>
+          </button>
+          {{ line|safe }}
+        </div>
+        {% endfor %}
+      </div>
     </div>
     {% else %}
     <div class="paper-section">
@@ -151,4 +216,75 @@ Research Assistant{% endblock %} {% block styles %}
     </div>
   </div>
 </div>
+<script>
+  // Function to toggle bookmark
+  function toggleBookmark(button) {
+    // Remove active class from all bookmark buttons
+    document.querySelectorAll(".bookmark-btn").forEach((btn) => {
+      btn.classList.remove("bookmark-active");
+      btn.innerHTML = '<i class="fas fa-bookmark"></i>';
+    });
+
+    // Add active class to the clicked button
+    button.classList.add("bookmark-active");
+    button.innerHTML = '<i class="fas fa-bookmark"></i> Marked';
+
+    // Get the section and paragraph information
+    const paragraph = button.parentElement;
+    const section = paragraph
+      .closest(".section-content")
+      .getAttribute("data-section");
+    const paragraphIndex = Array.from(paragraph.parentNode.children).indexOf(
+      paragraph
+    );
+
+    // Save bookmark to localStorage
+    const bookmark = {
+      projectId: "{{ project.id }}",
+      section: section,
+      paragraphIndex: paragraphIndex,
+    };
+
+    localStorage.setItem(
+      "paperBookmark_{{ project.id }}",
+      JSON.stringify(bookmark)
+    );
+
+    // Show a notification
+    alert("Bookmark saved! You can continue from here next time.");
+  }
+
+  // Function to load bookmark on page load
+  document.addEventListener("DOMContentLoaded", function () {
+    const savedBookmark = localStorage.getItem(
+      "paperBookmark_{{ project.id }}"
+    );
+
+    if (savedBookmark) {
+      const bookmark = JSON.parse(savedBookmark);
+      const sectionElement = document.querySelector(
+        `.section-content[data-section="${bookmark.section}"]`
+      );
+
+      if (sectionElement) {
+        const paragraphs =
+          sectionElement.querySelectorAll(".content-paragraph");
+        if (paragraphs[bookmark.paragraphIndex]) {
+          const button =
+            paragraphs[bookmark.paragraphIndex].querySelector(".bookmark-btn");
+          if (button) {
+            button.classList.add("bookmark-active");
+            button.innerHTML = '<i class="fas fa-bookmark"></i> Marked';
+
+            // Scroll to the bookmarked paragraph
+            paragraphs[bookmark.paragraphIndex].scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          }
+        }
+      }
+    }
+  });
+</script>
 {% endblock %}
