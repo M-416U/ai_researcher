@@ -3,6 +3,10 @@ from flask import current_app
 import logging
 import json
 from app.services.gemini_service import GeminiService
+import gc
+import time
+import psutil
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +38,6 @@ class ContentService:
     ):
         """Generate content for a specific section"""
         try:
-            import os
-            import psutil
-
             process = psutil.Process(os.getpid())
             initial_memory = process.memory_info().rss / 1024 / 1024  # MB
             logger.info(f"Initial memory usage: {initial_memory:.2f} MB")
@@ -129,15 +130,20 @@ class ContentService:
 
                 # Calculate the number of pages
                 total_pages = page_range["end"] - page_range["start"] + 1
-                timeout_per_page = 60
-                max_pages_per_batch = 3
+                
+                # Reduce batch size for larger sections to prevent memory issues
+                max_pages_per_batch = 2 if total_pages > 5 else 3
+                
+                logger.info(f"Processing {total_pages} pages in batches of {max_pages_per_batch}")
+                
                 for batch_start in range(
                     page_range["start"], page_range["end"] + 1, max_pages_per_batch
                 ):
                     batch_end = min(
                         batch_start + max_pages_per_batch - 1, page_range["end"]
                     )
-                    print(f"Generating batch from page {batch_start} to {batch_end}")
+                    logger.info(f"Generating batch from page {batch_start} to {batch_end}")
+                    
                     for page_num in range(batch_start, batch_end + 1):
                         current_page = {"start": page_num, "end": page_num}
                         # Words per page
@@ -174,8 +180,6 @@ class ContentService:
                             return {"error": f"Unsupported language: {language}"}
 
                         try:
-                            import time
-
                             start_time = time.time()
 
                             response = self.model.generate_content(
@@ -207,7 +211,7 @@ class ContentService:
                             )
 
                             elapsed_time = time.time() - start_time
-                            print(f"Page generation took {elapsed_time:.2f} seconds")
+                            logger.info(f"Page generation took {elapsed_time:.2f} seconds")
 
                             page_content = self._parse_content_response(
                                 response.text, section_title, subsection_titles
@@ -239,13 +243,25 @@ class ContentService:
                                 "content"
                             ] += f"\n\n[Content generation for page {page_num} failed: {str(page_error)}]\n\n"
                             continue
-                        import gc
-
-                        gc.collect()
+                    
+                    # Force garbage collection after each batch
+                    gc.collect()
+                    
+                    # Log memory usage after each batch
+                    current_memory = process.memory_info().rss / 1024 / 1024  # MB
+                    memory_diff = current_memory - initial_memory
+                    logger.info(
+                        f"Memory after batch {batch_start}-{batch_end}: {current_memory:.2f} MB (change: {memory_diff:+.2f} MB)"
+                    )
+                    
+                    # Add a small delay between batches to allow memory cleanup
+                    time.sleep(1)
+                
+                # Final memory usage report
                 current_memory = process.memory_info().rss / 1024 / 1024  # MB
                 memory_diff = current_memory - initial_memory
                 logger.info(
-                    f"Current memory usage: {current_memory:.2f} MB (change: {memory_diff:+.2f} MB)"
+                    f"Final memory usage: {current_memory:.2f} MB (change: {memory_diff:+.2f} MB)"
                 )
                 return combined_content
         except Exception as e:
