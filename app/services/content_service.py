@@ -34,6 +34,12 @@ class ContentService:
     ):
         """Generate content for a specific section"""
         try:
+            import os
+            import psutil
+
+            process = psutil.Process(os.getpid())
+            initial_memory = process.memory_info().rss / 1024 / 1024  # MB
+            logger.info(f"Initial memory usage: {initial_memory:.2f} MB")
             outline_structure = outline.get_outline_structure()
             section = None
             for s in outline_structure.get("sections", []):
@@ -123,101 +129,125 @@ class ContentService:
 
                 # Calculate the number of pages
                 total_pages = page_range["end"] - page_range["start"] + 1
-
-                # Generate content for each page
-                for page_num in range(page_range["start"], page_range["end"] + 1):
-                    current_page = {"start": page_num, "end": page_num}
-                    print(
-                        f"Generating content for page {current_page} out of {total_pages}"
+                timeout_per_page = 60
+                max_pages_per_batch = 3
+                for batch_start in range(
+                    page_range["start"], page_range["end"] + 1, max_pages_per_batch
+                ):
+                    batch_end = min(
+                        batch_start + max_pages_per_batch - 1, page_range["end"]
                     )
-                    # Words per page
-                    page_target_words = words_per_page
+                    print(f"Generating batch from page {batch_start} to {batch_end}")
+                    for page_num in range(batch_start, batch_end + 1):
+                        current_page = {"start": page_num, "end": page_num}
+                        # Words per page
+                        page_target_words = words_per_page
 
-                    # Create a prompt for this specific page
-                    if language == "en":
-                        prompt = self._create_english_page_prompt(
-                            project.title,
-                            outline_structure.get("thesis_statement", ""),
-                            section_title,
-                            section.get("subsections", []),
-                            citation_style,
-                            page_target_words,
-                            current_page,
-                            page_num - page_range["start"] + 1,
-                            total_pages,
-                            combined_content["content"],
-                        )
-                    elif language == "ar":
-                        prompt = self._create_arabic_page_prompt(
-                            project.title,
-                            outline_structure.get("thesis_statement", ""),
-                            section_title,
-                            section.get("subsections", []),
-                            citation_style,
-                            page_target_words,
-                            current_page,
-                            page_num - page_range["start"] + 1,  # Current page number
-                            total_pages,  # Total pages in section
-                            combined_content["content"],  # Previous content for context
-                        )
-                    else:
-                        return {"error": f"Unsupported language: {language}"}
+                        # Create a prompt for this specific page
+                        if language == "en":
+                            prompt = self._create_english_page_prompt(
+                                project.title,
+                                outline_structure.get("thesis_statement", ""),
+                                section_title,
+                                section.get("subsections", []),
+                                citation_style,
+                                page_target_words,
+                                current_page,
+                                page_num - page_range["start"] + 1,
+                                total_pages,
+                                combined_content["content"],
+                            )
+                        elif language == "ar":
+                            prompt = self._create_arabic_page_prompt(
+                                project.title,
+                                outline_structure.get("thesis_statement", ""),
+                                section_title,
+                                section.get("subsections", []),
+                                citation_style,
+                                page_target_words,
+                                current_page,
+                                page_num - page_range["start"] + 1,
+                                total_pages,
+                                combined_content["content"],
+                            )
+                        else:
+                            return {"error": f"Unsupported language: {language}"}
 
-                    # Generate content for this page
-                    response = self.model.generate_content(
-                        prompt,
-                        generation_config={
-                            "temperature": 0.7,
-                            "top_p": 0.8,
-                            "top_k": 40,
-                            "max_output_tokens": 2048,
-                        },
-                        safety_settings=[
-                            {
-                                "category": "HARM_CATEGORY_HARASSMENT",
-                                "threshold": "BLOCK_MEDIUM_AND_ABOVE",
-                            },
-                            {
-                                "category": "HARM_CATEGORY_HATE_SPEECH",
-                                "threshold": "BLOCK_MEDIUM_AND_ABOVE",
-                            },
-                            {
-                                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                                "threshold": "BLOCK_MEDIUM_AND_ABOVE",
-                            },
-                            {
-                                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                                "threshold": "BLOCK_MEDIUM_AND_ABOVE",
-                            },
-                        ],
-                    )
-                    print(response.text[:50])
-                    print(len(response.text))
+                        try:
+                            import time
 
-                    # Parse the page response
-                    page_content = self._parse_content_response(
-                        response.text, section_title, subsection_titles
-                    )
+                            start_time = time.time()
 
-                    # Append the page content to the combined content
-                    if page_num > page_range["start"]:
-                        combined_content["content"] += "\n\n"
-                    combined_content["content"] += page_content.get("content", "")
+                            response = self.model.generate_content(
+                                prompt,
+                                generation_config={
+                                    "temperature": 0.7,
+                                    "top_p": 0.8,
+                                    "top_k": 40,
+                                    "max_output_tokens": 2048,
+                                },
+                                safety_settings=[
+                                    {
+                                        "category": "HARM_CATEGORY_HARASSMENT",
+                                        "threshold": "BLOCK_MEDIUM_AND_ABOVE",
+                                    },
+                                    {
+                                        "category": "HARM_CATEGORY_HATE_SPEECH",
+                                        "threshold": "BLOCK_MEDIUM_AND_ABOVE",
+                                    },
+                                    {
+                                        "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                                        "threshold": "BLOCK_MEDIUM_AND_ABOVE",
+                                    },
+                                    {
+                                        "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                                        "threshold": "BLOCK_MEDIUM_AND_ABOVE",
+                                    },
+                                ],
+                            )
 
-                    # Add new citations to the combined citations list
-                    for citation in page_content.get("citations", []):
-                        # Check if this citation already exists
-                        citation_exists = False
-                        for existing_citation in combined_content["citations"]:
-                            if existing_citation.get("id") == citation.get("id"):
-                                citation_exists = True
-                                break
+                            elapsed_time = time.time() - start_time
+                            print(f"Page generation took {elapsed_time:.2f} seconds")
 
-                        if not citation_exists:
-                            combined_content["citations"].append(citation)
+                            page_content = self._parse_content_response(
+                                response.text, section_title, subsection_titles
+                            )
 
+                            if page_num > page_range["start"]:
+                                combined_content["content"] += "\n\n"
+                            combined_content["content"] += page_content.get(
+                                "content", ""
+                            )
+
+                            for citation in page_content.get("citations", []):
+                                citation_exists = False
+                                for existing_citation in combined_content["citations"]:
+                                    if existing_citation.get("id") == citation.get(
+                                        "id"
+                                    ):
+                                        citation_exists = True
+                                        break
+
+                                if not citation_exists:
+                                    combined_content["citations"].append(citation)
+
+                        except Exception as page_error:
+                            logger.error(
+                                f"Error generating page {page_num}: {str(page_error)}"
+                            )
+                            combined_content[
+                                "content"
+                            ] += f"\n\n[Content generation for page {page_num} failed: {str(page_error)}]\n\n"
+                            continue
+                        import gc
+
+                        gc.collect()
+                current_memory = process.memory_info().rss / 1024 / 1024  # MB
+                memory_diff = current_memory - initial_memory
+                logger.info(
+                    f"Current memory usage: {current_memory:.2f} MB (change: {memory_diff:+.2f} MB)"
+                )
                 return combined_content
-
         except Exception as e:
             logger.error(f"Error generating section content: {str(e)}")
             return {"error": str(e)}

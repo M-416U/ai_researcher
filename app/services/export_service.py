@@ -3,7 +3,7 @@ from app.models.research import ResearchProject, ResearchOutline
 from app.models.content import ResearchContent
 import os
 from flask import current_app
-from datetime import datetime
+from datetime import datetime, timedelta
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from bs4 import BeautifulSoup
@@ -22,6 +22,57 @@ class ExportService:
 
     def __init__(self):
         pass
+
+    @staticmethod
+    def cleanup_exports(max_age_hours=1):
+        """
+        Clean up export files older than the specified hours
+
+        Args:
+            max_age_hours: Maximum age of files in hours before deletion
+
+        Returns:
+            dict: Information about the cleanup operation
+        """
+        try:
+            export_dir = os.path.join(current_app.root_path, "static", "exports")
+
+            # If directory doesn't exist, nothing to clean
+            if not os.path.exists(export_dir):
+                return {
+                    "status": "success",
+                    "message": "No export directory found",
+                    "deleted_count": 0,
+                }
+
+            # Calculate cutoff time
+            cutoff_time = datetime.now() - timedelta(hours=max_age_hours)
+            deleted_count = 0
+
+            # Iterate through files in the export directory
+            for filename in os.listdir(export_dir):
+                file_path = os.path.join(export_dir, filename)
+
+                # Check if it's a file (not a directory)
+                if os.path.isfile(file_path):
+                    # Get file modification time
+                    file_mod_time = datetime.fromtimestamp(os.path.getmtime(file_path))
+
+                    # Delete if older than cutoff time
+                    if file_mod_time < cutoff_time:
+                        os.remove(file_path)
+                        deleted_count += 1
+                        logger.info(f"Deleted old export file: {filename}")
+
+            return {
+                "status": "success",
+                "message": f"Cleaned up {deleted_count} export files older than {max_age_hours} hour(s)",
+                "deleted_count": deleted_count,
+            }
+
+        except Exception as e:
+            logger.error(f"Error cleaning up exports: {str(e)}")
+            return {"status": "error", "message": str(e)}
 
     def generate_pdf(self, project_id, outline_id=None):
         """

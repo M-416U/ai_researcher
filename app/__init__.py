@@ -5,6 +5,8 @@ from flask_jwt_extended import JWTManager, get_jwt_identity
 import os
 from dotenv import load_dotenv
 from datetime import datetime
+import atexit
+from apscheduler.schedulers.background import BackgroundScheduler
 
 # Load environment variables
 load_dotenv()
@@ -13,6 +15,7 @@ load_dotenv()
 db = SQLAlchemy()
 migrate = Migrate()
 jwt = JWTManager()
+scheduler = BackgroundScheduler()
 
 from app.models import *
 
@@ -105,6 +108,26 @@ def create_app(config_name="development"):
         """Flask CLI command to initialize database with admin user"""
         init_db(app)
         print("Database initialized with admin user")
+
+    # Set up scheduled tasks
+    with app.app_context():
+        from app.services.export_service import ExportService
+        
+        # Schedule export cleanup task to run every hour
+        def cleanup_exports_job():
+            with app.app_context():
+                result = ExportService.cleanup_exports(max_age_hours=1)
+                app.logger.info(f"Scheduled export cleanup: {result['message']}")
+        
+        # Add the job to the scheduler
+        scheduler.add_job(func=cleanup_exports_job, trigger="interval", hours=1, id="cleanup_exports")
+        
+        # Start the scheduler if it's not already running
+        if not scheduler.running:
+            scheduler.start()
+            
+        # Shut down the scheduler when the app exits
+        atexit.register(lambda: scheduler.shutdown())
 
     setup_database()
     return app

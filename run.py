@@ -2,6 +2,7 @@ from app import create_app, db
 from app.models.user import User
 from app.models.research import ResearchProject, ResearchOutline
 from app.models.content import ResearchContent
+from app.services.export_service import ExportService
 import os
 
 app = create_app(os.environ.get("FLASK_ENV", "production"))
@@ -41,7 +42,12 @@ if __name__ == "__main__":
         print("Creating tables...")
         db.create_all()
         create_admin_user()
-        create_admin_user()
+        
+        # Clean up old export files on startup
+        print("Cleaning up old export files...")
+        cleanup_result = ExportService.cleanup_exports(max_age_hours=1)
+        print(cleanup_result["message"])
+        
     # Use host and port from environment variables for deployment
     host = os.environ.get("HOST", "0.0.0.0")
     port = int(os.environ.get("PORT", 5000))
