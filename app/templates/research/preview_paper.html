@@ -40,20 +40,11 @@ Research Assistant{% endblock %} {% block styles %}
     margin-bottom: 2rem;
   }
 
-  @media print {
-    .no-print {
-      display: none;
-    }
-
-    .paper-container {
-      box-shadow: none;
-      padding: 0;
-    }
-  }
   .content-line {
     position: relative;
     padding-right: 40px;
     margin-bottom: 0.5rem;
+    overflow: visible;
   }
 
   .bookmark-btn {
@@ -77,6 +68,7 @@ Research Assistant{% endblock %} {% block styles %}
     background-color: #ffc107;
     opacity: 1 !important;
   }
+
   .content-paragraph {
     position: relative;
     padding-right: 40px;
@@ -86,29 +78,91 @@ Research Assistant{% endblock %} {% block styles %}
     opacity: 1;
   }
 
-  .bookmark-active {
-    background-color: #ffc107;
-    opacity: 1 !important;
+  /* Print frame styles */
+  #print-frame-container {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 9999;
+  }
+
+  #print-frame {
+    position: absolute;
+    top: 5%;
+    left: 5%;
+    right: 5%;
+    bottom: 5%;
+    width: 90%;
+    height: 90%;
+    background-color: white;
+    border: none;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  }
+
+  .print-controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
   }
 
   @media print {
     .no-print {
-      display: none;
+      display: none !important;
     }
 
     .bookmark-btn {
-      display: none;
+      display: none !important;
     }
 
-    .paper-container {
-      box-shadow: none;
-      padding: 0;
+    .content-line {
+      padding-right: 0 !important;
+      display: block !important;
+      width: 100% !important;
+      page-break-inside: avoid;
+      overflow: visible !important;
+    }
+
+    .section-content {
+      width: 100% !important;
+      display: block !important;
+    }
+
+    /* Fix for RTL content */
+    .rtl .content-line {
+      padding-right: 0 !important;
+      padding-left: 0 !important;
+      text-align: right !important;
+    }
+
+    /* Ensure proper page breaks */
+    .paper-section {
+      page-break-inside: avoid;
+      page-break-after: auto;
+    }
+
+    h1,
+    h2 {
+      page-break-after: avoid;
+    }
+
+    /* Ensure content doesn't get cut off */
+    * {
+      overflow: visible !important;
     }
   }
 </style>
 {% endblock %} {% block content %}
 <div class="container py-4">
-  <div class="no-print d-flex justify-content-between align-items-center mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>Paper Preview</h1>
     <div>
       <a
@@ -117,13 +171,13 @@ Research Assistant{% endblock %} {% block styles %}
       >
         <i class="fas fa-arrow-left me-1"></i>Back to Project
       </a>
-      <button onclick="window.print()" class="btn btn-outline-primary me-2">
+      <button onclick="showPrintFrame()" class="btn btn-outline-primary me-2">
         <i class="fas fa-print me-1"></i>Print
       </button>
     </div>
   </div>
 
-  <div class="no-print export-buttons text-center">
+  <div class="export-buttons text-center">
     <div class="btn-group">
       <a
         href="{{ url_for('research_views.export_pdf', project_id=project.id) }}"
@@ -171,7 +225,7 @@ Research Assistant{% endblock %} {% block styles %}
         {% set raw_html = sections_with_content[section_title].content|safe %}
         {% set lines = raw_html.split('\n') %} {% for line in lines %}
         <div class="content-line">
-          <button class="bookmark-btn no-print" onclick="toggleBookmark(this)">
+          <button class="bookmark-btn" onclick="toggleBookmark(this)">
             <i class="fas fa-bookmark"></i>
           </button>
           {{ line|safe }}
@@ -216,6 +270,20 @@ Research Assistant{% endblock %} {% block styles %}
     </div>
   </div>
 </div>
+
+<!-- Print Frame Container -->
+<div id="print-frame-container">
+  <div class="print-controls">
+    <button onclick="printFrameContent()" class="btn btn-primary me-2">
+      <i class="fas fa-print me-1"></i>Print
+    </button>
+    <button onclick="closePrintFrame()" class="btn btn-secondary">
+      <i class="fas fa-times me-1"></i>Close
+    </button>
+  </div>
+  <iframe id="print-frame" frameborder="0"></iframe>
+</div>
+
 <script>
   // Function to toggle bookmark
   function toggleBookmark(button) {
@@ -286,5 +354,162 @@ Research Assistant{% endblock %} {% block styles %}
       }
     }
   });
+  function renderMarkdown() {
+    document.querySelectorAll(".markdown-section").forEach(function (element) {
+      const markdownContent = element.getAttribute("data-markdown");
+      if (markdownContent) {
+        // Convert markdown to HTML using marked.js
+        element.innerHTML = marked.parse(markdownContent);
+      }
+    });
+  }
+  // Function to show print frame
+  function showPrintFrame() {
+    // Get the paper container content
+    const paperContent = document
+      .querySelector(".paper-container")
+      .cloneNode(true);
+
+    // Remove all bookmark buttons from the clone
+    paperContent.querySelectorAll(".bookmark-btn").forEach((btn) => {
+      btn.remove();
+    });
+
+    // Fix padding on content lines
+    paperContent.querySelectorAll(".content-line").forEach((line) => {
+      line.style.paddingRight = "0";
+    });
+
+    const printDoc = `
+<!DOCTYPE html>
+<html lang="${paperContent.classList.contains("rtl") ? "ar" : "en"}">
+<head>
+  <meta charset="UTF-8">
+  <title>Print</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"><\/script>
+  <style>
+    body {
+      margin: 0;
+      padding: 2cm;
+      font-family: Arial, sans-serif;
+    }
+    .paper-container {
+      max-width: 100%;
+      background-color: white;
+    }
+    .rtl {
+      direction: rtl;
+      text-align: right;
+    }
+    .paper-title {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .paper-section {
+      margin-bottom: 2rem;
+      font-size: 1.5rem;
+      page-break-inside: avoid;
+    }
+    .paper-section h2 {
+      margin-bottom: 1rem;
+      page-break-after: avoid;
+    }
+    .index-item {
+      margin-bottom: 0.5rem;
+    }
+    .index-item.indented {
+      margin-left: 2rem;
+    }
+    .content-line {
+      margin-bottom: 0.5rem;
+    }
+    .markdown-content {
+      line-height: 1.6;
+    }
+    .markdown-content h1,
+    .markdown-content h2,
+    .markdown-content h3,
+    .markdown-content h4,
+    .markdown-content h5,
+    .markdown-content h6 {
+      margin-top: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .markdown-content p {
+      margin-bottom: 1rem;
+    }
+    .markdown-content ul,
+    .markdown-content ol {
+      margin-bottom: 1rem;
+      padding-left: 2rem;
+    }
+    .markdown-content blockquote {
+      border-left: 4px solid #ced4da;
+      padding-left: 1rem;
+      margin-left: 0;
+      color: #6c757d;
+    }
+    .markdown-content code {
+      background-color: #f8f9fa;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: monospace;
+    }
+    .markdown-content pre {
+      background-color: #f8f9fa;
+      padding: 1rem;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+    .markdown-content pre code {
+      background-color: transparent;
+      padding: 0;
+    }
+    @page {
+      size: auto;
+      margin-top: 5mm;
+      margin-bottom: 5mm;
+    }
+  </style>
+</head>
+<body class="${paperContent.classList.contains("rtl") ? "rtl" : ""}">
+  ${paperContent.outerHTML}
+  <script>
+    document.querySelectorAll('.markdown-section').forEach(function(element) {
+      const markdownContent = element.getAttribute('data-markdown');
+      console.log(markdownContent);
+      if (markdownContent) {
+        element.innerHTML = marked.parse(markdownContent);
+      }
+    });
+  \<\/script\>
+</body>
+</html>
+`;
+
+    // Display the frame container
+    const frameContainer = document.getElementById("print-frame-container");
+    frameContainer.style.display = "block";
+
+    // Set the content of the iframe
+    const iframe = document.getElementById("print-frame");
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+    iframeDoc.open();
+    iframeDoc.write(printDoc);
+    iframeDoc.close();
+  }
+
+  // Function to print the iframe content
+  function printFrameContent() {
+    const iframe = document.getElementById("print-frame");
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+  }
+
+  // Function to close print frame
+  function closePrintFrame() {
+    const frameContainer = document.getElementById("print-frame-container");
+    frameContainer.style.display = "none";
+  }
 </script>
 {% endblock %}
